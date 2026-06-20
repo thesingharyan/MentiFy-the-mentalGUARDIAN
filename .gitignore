@@ -1,0 +1,19 @@
+# Python virtual environment
+backend/venv/
+
+# Environment variables
+backend/.env
+
+# Local model files
+backend/model/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
