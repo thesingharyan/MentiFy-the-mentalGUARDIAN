@@ -1,6 +1,6 @@
-🧠 Mentify AI — Mental Wellness Assistant
+🧠 MentiFy - thementalGUARDIAN
 
-Mentify AI is an intelligent mental wellness web application that uses a fine-tuned DistilBERT model along with Google Gemini LLM to analyze user emotions and provide personalized mental health insights.
+Mentify is an intelligent mental wellness web application that uses a fine-tuned DistilBERT model along with Google Gemini LLM to analyze user emotions and provide personalized mental health insights.
 
 It collects user responses through guided questions and a short MCQ-based test, predicts mental health conditions using AI, and generates deeper suggestions using LLM-based reasoning.
 
@@ -62,7 +62,7 @@ Takes user answers + model predictions
 Generates structured mental wellness report
 
 
-👨‍💻 Contributors
+👨‍💻 Contributors:
 Anisha Rawat
 Aryan Singh
 
