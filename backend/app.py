@@ -11,47 +11,69 @@ CORS(app)
 @app.route("/")
 def home():
     return jsonify({
-        "message": "Mentify Backend Running!"
+        "message": "Mentify AI Backend is Running"
     })
 
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    try:
+        data = request.get_json()
 
-    data = request.get_json()
+        if not data:
+            return jsonify({"error": "No input provided"}), 400
 
-    if not data:
+        answers = data.get("answers")
+
+        # -----------------------------
+        # VALIDATION
+        # -----------------------------
+        if not answers:
+            return jsonify({"error": "Answers field is required"}), 400
+
+        if len(answers) != 5:
+            return jsonify({"error": "Exactly 5 answers required"}), 400
+
+        # Ensure all inputs are strings
+        cleaned_answers = [str(a).strip() for a in answers if a]
+
+        if len(cleaned_answers) != 5:
+            return jsonify({"error": "All 5 answers must be non-empty"}), 400
+
+        # -----------------------------
+        # STEP 1: ML PREDICTION
+        # -----------------------------
+        combined_text = " ".join(cleaned_answers)
+        prediction_result = predict(combined_text)
+
+        # -----------------------------
+        # STEP 2: LLM INSIGHTS
+        # -----------------------------
+        insights = generate_insights(
+            answers=cleaned_answers,
+            prediction=prediction_result["prediction"],
+            confidence=prediction_result["confidence"],
+            probabilities=prediction_result["probabilities"]
+        )
+
+        # -----------------------------
+        # FINAL RESPONSE
+        # -----------------------------
         return jsonify({
-            "error": "No JSON received."
-        }), 400
+            "success": True,
+            "input": cleaned_answers,
+            "prediction": prediction_result["prediction"],
+            "confidence": prediction_result["confidence"],
+            "probabilities": prediction_result["probabilities"],
+            "analysis": insights
+        })
 
-    answers = data.get("answers")
-
-    if not answers or len(answers) != 5:
+    except Exception as e:
         return jsonify({
-            "error": "Exactly 5 answers are required."
-        }), 400
+            "success": False,
+            "error": str(e)
+        }), 500
 
-    # Combine all answers into one paragraph
-    combined_text = " ".join(answer.strip() for answer in answers)
-
-    # DistilBERT prediction
-    prediction_result = predict(combined_text)
-
-    # Gemini analysis
-    insights = generate_insights(
-        answers=answers,
-        prediction=prediction_result["prediction"],
-        confidence=prediction_result["confidence"],
-        probabilities=prediction_result["probabilities"]
-    )
-
-    return jsonify({
-        "prediction": prediction_result["prediction"],
-        "confidence": prediction_result["confidence"],
-        "probabilities": prediction_result["probabilities"],
-        "analysis": insights
-    })
 
 
 if __name__ == "__main__":

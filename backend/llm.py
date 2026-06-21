@@ -7,60 +7,55 @@ client = genai.Client(api_key=GOOGLE_API_KEY)
 
 
 def generate_insights(answers, prediction, confidence, probabilities):
+    """
+    Uses Gemini to generate mental health insights based on:
+    - user answers
+    - ML prediction
+    - confidence scores
+    """
+
     prompt = f"""
-You are Mentify AI, a mental wellness assistant.
+You are "Mentify AI", a supportive mental wellness assistant.
 
-The following prediction was produced by a machine learning model.
+IMPORTANT RULES:
+- You are NOT a medical professional.
+- Do NOT diagnose medical conditions.
+- Be empathetic and supportive.
+- If risk seems high (like suicidal), recommend seeking immediate help.
+- Keep language simple and non-judgmental.
 
-Prediction:
-{prediction}
+INPUT DATA:
 
-Confidence:
-{confidence}
+ML Prediction: {prediction}
+Confidence: {confidence}
 
 Class Probabilities:
 {json.dumps(probabilities, indent=2)}
 
-User Responses:
+User Answers:
 {json.dumps(answers, indent=2)}
 
-Your task:
-Analyze the user's responses together with the ML prediction.
+TASK:
+Generate a structured JSON response.
 
-Return ONLY valid JSON.
-
-The JSON format MUST be:
+Return ONLY valid JSON in this format:
 
 {{
     "summary": "...",
-
-    "possible_causes": [
-        "...",
-        "..."
-    ],
-
-    "recommendations": [
-        "...",
-        "...",
-        "..."
-    ],
-
-    "daily_habits": [
-        "...",
-        "..."
-    ],
-
+    "possible_causes": ["...", "..."],
+    "recommendations": ["...", "...", "..."],
+    "daily_habits": ["...", "..."],
     "professional_help": true,
-
-    "disclaimer": "This is not a medical diagnosis. If symptoms are severe or persistent, consult a qualified mental health professional."
+    "risk_level": "low | medium | high",
+    "disclaimer": "This is not a medical diagnosis. If you are struggling, consider speaking to a qualified mental health professional."
 }}
 
-Rules:
-- Do not diagnose medical conditions.
-- Be supportive and empathetic.
-- Base your response on BOTH the prediction and the user's responses.
-- Recommend professional help only when appropriate based on the information provided.
-- Return ONLY JSON.
+GUIDELINES:
+- If prediction is "Suicidal" → risk_level MUST be "high"
+- If prediction is "Depression" or confidence > 0.85 → risk_level at least "medium"
+- Otherwise mostly "low"
+- recommendations should be practical and simple
+- daily habits should be small daily actions
 """
 
     response = client.models.generate_content(
@@ -70,16 +65,10 @@ Rules:
 
     text = response.text.strip()
 
-    # Remove Markdown code fences if Gemini adds them
+    # Clean markdown if Gemini wraps response
     if text.startswith("```json"):
-        text = text[len("```json"):]
-
-    if text.startswith("```"):
-        text = text[len("```"):]
-
-    if text.endswith("```"):
-        text = text[:-3]
-
-    text = text.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+    elif text.startswith("```"):
+        text = text.replace("```", "").strip()
 
     return json.loads(text)

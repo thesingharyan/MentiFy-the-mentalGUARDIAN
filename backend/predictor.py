@@ -1,70 +1,66 @@
 import torch
+import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-from config import HF_MODEL, MAX_LENGTH
+from config import HF_MODEL, LABELS
 
-# Load tokenizer and model (loads once when Flask starts)
+# Load tokenizer and model once (important for performance)
 tokenizer = AutoTokenizer.from_pretrained(HF_MODEL)
 model = AutoModelForSequenceClassification.from_pretrained(HF_MODEL)
 
-# Set model to evaluation mode
+# Set device (GPU if available, else CPU)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
 model.eval()
 
 
-def predict(text):
+def predict(text: str):
     """
-    Predict mental health category from input text.
-
-    Returns:
-        {
-            "prediction": "...",
-            "confidence": 0.95,
-            "probabilities": {
-                ...
-            }
-        }
+    Takes user text input and returns:
+    - predicted label
+    - confidence score
+    - probability distribution
     """
 
     # Tokenize input
     inputs = tokenizer(
         text,
+        return_tensors="pt",
         truncation=True,
         padding=True,
-        max_length=MAX_LENGTH,
-        return_tensors="pt"
+        max_length=256
     )
 
-    # Disable gradient calculations
+    # Move tensors to device
+    inputs = {key: val.to(device) for key, val in inputs.items()}
+
+    # Disable gradient calculation for inference
     with torch.no_grad():
         outputs = model(**inputs)
 
     # Convert logits to probabilities
-    probabilities = torch.softmax(outputs.logits, dim=1)[0]
+    logits = outputs.logits
+    probs = torch.nn.functional.softmax(logits, dim=1).cpu().numpy()[0]
 
-    # Predicted class index
-    predicted_index = torch.argmax(probabilities).item()
+    # Get prediction index
+    pred_index = int(np.argmax(probs))
 
-    # Label name
-    predicted_label = model.config.id2label[str(predicted_index)] \
-        if isinstance(model.config.id2label, dict) and str(predicted_index) in model.config.id2label \
-        else model.config.id2label[predicted_index]
+    # Map to label
+    prediction = LABELS[pred_index]
 
-    # Confidence
-    confidence = probabilities[predicted_index].item()
+    confidence = float(probs[pred_index])
 
-    # Probability dictionary
-    probability_dict = {}
+    # Build probability dictionary
+    probabilities = {
+        LABELS[i]: float(probs[i])
+        for i in range(len(LABELS))
+    }
 
-    for i, prob in enumerate(probabilities):
-        label = model.config.id2label[str(i)] \
-            if isinstance(model.config.id2label, dict) and str(i) in model.config.id2label \
-            else model.config.id2label[i]
-
-        probability_dict[label] = round(prob.item(), 4)
-
+    print("Loaded model from:", HF_MODEL)
+    print(model.config._name_or_path)
+    
     return {
-    "input_text": text,
-    "prediction": predicted_label,
-    "confidence": round(confidence, 4),
-    "probabilities": probability_dict
-}
+        "prediction": prediction,
+        "confidence": round(confidence, 4),
+        "probabilities": probabilities
+    }
