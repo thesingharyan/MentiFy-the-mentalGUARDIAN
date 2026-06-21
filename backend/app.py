@@ -1,79 +1,116 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-from predictor import predict
+from predictor import predict_text
 from llm import generate_insights
+from config import LABELS
+from collections import Counter
 
 app = Flask(__name__)
 CORS(app)
 
+# session storage (simple in-memory)
+answers = []
+question_predictions = []
+
+def infer_prediction_from_answers(answers, current_label):
+    text = " ".join([item["answer"] for item in answers]).lower()
+    if current_label != "Normal":
+        return current_label
+
+    suicidal_keywords = ["suicidal", "kill myself", "end my life", "die", "worthless", "no reason to live"]
+    depression_keywords = ["depressed", "sad", "hopeless", "low", "empty", "crying", "cry", "tired", "miserable"]
+    stress_keywords = ["stress", "stressed", "anxious", "anxiety", "overwhelmed", "pressure", "tense", "worried"]
+
+    if any(word in text for word in suicidal_keywords):
+        return "Suicidal"
+
+    if any(word in text for word in depression_keywords):
+        return "Depression"
+
+    if any(word in text for word in stress_keywords):
+        return "Stress"
+
+    return current_label
+
 
 @app.route("/")
 def home():
+    return jsonify({"message": "Mentify Backend Running!"})
+
+
+# -------------------------
+# STEP 1: Each question
+# -------------------------
+@app.route("/predict", methods=["POST"])
+def predict():
+
+    data = request.get_json()
+
+    question = data.get("question")
+    answer = data.get("answer")
+
+    if not answer:
+        return jsonify({"error": "answer required"}), 400
+
+    prediction_input = f"{question} {answer}"
+    prediction, confidence, probs = predict_text(prediction_input)
+
+    # store answer
+    answers.append({
+        "question": question,
+        "answer": answer
+    })
+
+    # store prediction
+    question_predictions.append({
+        "question": question,
+        "answer": answer,
+        "prediction": prediction,
+        "confidence": confidence
+    })
+
     return jsonify({
-        "message": "Mentify AI Backend is Running"
+        "prediction": prediction,
+        "confidence": confidence,
+        "all_probabilities": probs
     })
 
 
-@app.route("/analyze", methods=["POST"])
-def analyze():
-    try:
-        data = request.get_json()
+# -------------------------
+# STEP 2: FINAL RESULT (after 5 Qs)
+# -------------------------
+@app.route("/final", methods=["POST"])
+def final():
 
-        if not data:
-            return jsonify({"error": "No input provided"}), 400
+    if len(question_predictions) < 5:
+        return jsonify({"error": "At least 5 answers are required to generate the final result."}), 400
 
-        answers = data.get("answers")
+    # majority vote
+    all_preds = [q["prediction"] for q in question_predictions]
+    overall_prediction = Counter(all_preds).most_common(1)[0][0]
+    adjusted_prediction = infer_prediction_from_answers(answers, overall_prediction)
 
-        # -----------------------------
-        # VALIDATION
-        # -----------------------------
-        if not answers:
-            return jsonify({"error": "Answers field is required"}), 400
+    # call LLM
+    llm_result = generate_insights(
+        answers=answers,
+        overall_prediction=overall_prediction,
+        question_predictions=question_predictions
+    )
 
-        if len(answers) != 5:
-            return jsonify({"error": "Exactly 5 answers required"}), 400
+    display_prediction = adjusted_prediction
+    final_label = llm_result.get("final_label")
+    if final_label and final_label in LABELS:
+        display_prediction = final_label
 
-        # Ensure all inputs are strings
-        cleaned_answers = [str(a).strip() for a in answers if a]
+    # reset session
+    answers.clear()
+    question_predictions.clear()
 
-        if len(cleaned_answers) != 5:
-            return jsonify({"error": "All 5 answers must be non-empty"}), 400
-
-        # -----------------------------
-        # STEP 1: ML PREDICTION
-        # -----------------------------
-        combined_text = " ".join(cleaned_answers)
-        prediction_result = predict(combined_text)
-
-        # -----------------------------
-        # STEP 2: LLM INSIGHTS
-        # -----------------------------
-        insights = generate_insights(
-            answers=cleaned_answers,
-            prediction=prediction_result["prediction"],
-            confidence=prediction_result["confidence"],
-            probabilities=prediction_result["probabilities"]
-        )
-
-        # -----------------------------
-        # FINAL RESPONSE
-        # -----------------------------
-        return jsonify({
-            "success": True,
-            "input": cleaned_answers,
-            "prediction": prediction_result["prediction"],
-            "confidence": prediction_result["confidence"],
-            "probabilities": prediction_result["probabilities"],
-            "analysis": insights
-        })
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
-
+    return jsonify({
+        "overall_prediction": overall_prediction,
+        "display_prediction": display_prediction,
+        "insights": llm_result
+    })
 
 
 if __name__ == "__main__":

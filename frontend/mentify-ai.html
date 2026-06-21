@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mentify AI</title>
+
+    <link rel="stylesheet" href="style-ai.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+    <!-- Animated Background -->
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            🧠 <span>Mentify AI</span>
+        </div>
+
+        <div class="nav-right">
+            <span class="badge">AI Powered</span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+
+        <h1>
+            Your Intelligent <span>Mental Wellness</span> Companion
+        </h1>
+
+        <p>
+            Gain meaningful insights into your emotional well-being using Artificial Intelligence.
+            Reflect honestly, and receive personalized guidance designed to support your mental wellness.
+        </p>
+
+        <div class="features">
+            <div class="feature-card">🔒 Private</div>
+            <div class="feature-card">🤖 AI Powered</div>
+            <div class="feature-card">🌿 Personalized</div>
+            <div class="feature-card">📊 7-Class Analysis</div>
+        </div>
+
+        <div class="hero-cards">
+            <div class="hero-card">💬 Thoughtful check-in questions that help you reflect.</div>
+            <div class="hero-card">🌱 Gentle guidance with supportive, non-judgmental language.</div>
+            <div class="hero-card">✨ Personalized summary with practical habit tips.</div>
+        </div>
+    </section>
+
+    <!-- Assessment Section -->
+    <section class="container">
+
+        <div class="glass-card">
+
+            <h2>Mental Wellness Assessment</h2>
+
+            <p class="subtitle">
+                Answer carefully — one question at a time.
+            </p>
+
+            <!-- Progress -->
+            <div class="progress">
+                <div class="progress-bar"></div>
+            </div>
+
+            <!-- Question Indicator -->
+            <div style="text-align:center; margin:15px 0;">
+                <h3 id="questionTitle">Question 1 of 5</h3>
+                <p class="question-meta">💡 Answer honestly for better insights. Your privacy is protected and this session stays confidential.</p>
+            </div>
+
+            <!-- QUESTIONS (NOW WITH IDs FOR JS CONTROL) -->
+
+            <div class="question" id="question1">
+                <label>😊 How was your day?</label>
+                <textarea id="q1" placeholder="How was your day? Share the highlights and low points."></textarea>
+            </div>
+
+            <div class="question" id="question2">
+                <label>😴 How is your sleep cycle?</label>
+                <textarea id="q2" placeholder="How has your sleep been lately? Any changes in bedtime or waking up? "></textarea>
+            </div>
+
+            <div class="question" id="question3">
+                <label>😟 Do you feel stress sometimes?</label>
+                <textarea id="q3" placeholder="Do you feel stressed sometimes? Describe what causes it and how it feels."></textarea>
+            </div>
+
+            <div class="question" id="question4">
+                <label>😢 Do you feel crying sometimes for no reason?</label>
+                <textarea id="q4" placeholder="Do you feel like crying for no reason sometimes? Tell us how often and how it affects you."></textarea>
+            </div>
+
+            <div class="question" id="question5">
+                <label>💬 Do you want to tell something more?</label>
+                <textarea id="q5" placeholder="Is there anything else you'd like Mentify AI to know before finishing? "></textarea>
+            </div>
+
+            <!-- NEXT BUTTON -->
+            <div style="text-align:center; margin-top:20px;">
+                <button class="analyze-btn" onclick="submitAnswer()">
+                    Next Question →
+                </button>
+            </div>
+
+        </div>
+
+        <!-- RESULT -->
+        <div id="output"></div>
+
+    </section>
+
+    <footer>
+        <p>Powered by DistilBERT • Gemini AI • Flask</p>
+        <p>Made with ❤️ for Better Mental Wellness</p>
+    </footer>
+
+    <script src="script-ai.js"></script>
+
+</body>
+
+</html>

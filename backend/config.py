@@ -1,27 +1,18 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # loads .env file automatically
 
-# Hugging Face model path (your uploaded model repo)
-HF_MODEL = os.getenv("HF_MODEL")
+MODEL_PATH = "./model"
 
-# Gemini API key
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Flask environment
-FLASK_ENV = os.getenv("FLASK_ENV", "development")
-
-# Model settings
-MAX_LENGTH = 256
-
-# Labels MUST match training order
 LABELS = [
     "Anxiety",
     "Bipolar",
     "Depression",
     "Normal",
-    "Personality Disorder",
+    "Personality disorder",
     "Stress",
     "Suicidal"
 ]
