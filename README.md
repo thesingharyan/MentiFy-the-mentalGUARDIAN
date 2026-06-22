@@ -96,7 +96,8 @@ https://colab.research.google.com/drive/1ds8LwlH5gBoMOYptxi-l2LJUfT9z30Jf?usp=sh
 
 👨‍💻 Authors
 
-Anisha Rawat
-Aryan Singh
+**Anisha Rawat**
+<br>
+**Aryan Singh**
 
 ⭐ **If you found this project helpful, consider giving this repository a Star! Your support helps us continue improving MentiFy.**
